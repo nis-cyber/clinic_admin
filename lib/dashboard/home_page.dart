@@ -1,5 +1,6 @@
 import 'package:clinic_admin/auth/pages/status_page.dart';
 import 'package:clinic_admin/auth/service/clinic_service.dart';
+import 'package:clinic_admin/common/drawer.dart';
 import 'package:clinic_admin/doctor/pages/doctor_page.dart';
 import 'package:flutter/material.dart';
 
@@ -11,6 +12,7 @@ class ClinicHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        title: Text('Clinic Home Screen '),
         actions: [
           IconButton(
             icon: Icon(Icons.logout),
@@ -22,23 +24,24 @@ class ClinicHomeScreen extends StatelessWidget {
             },
           ),
         ],
-        leading: IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => DoctorPage(),
-                ),
-              );
-            },
-            icon: Icon(Icons.search)),
-        title: Text('Clinic Home Screen '),
       ),
+      drawer: MyDrawer(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DoctorPage(),
+                  ),
+                );
+              },
+              icon: Icon(Icons.search),
+            ),
             DoctorsSection(),
             SizedBox(height: 16.0),
             UpcomingQueueSection(),

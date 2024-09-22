@@ -1,9 +1,8 @@
-import 'package:clinic_admin/doctor/pages/add_doctor_page.dart';
-import 'package:clinic_admin/doctor/pages/doctor_detail_page.dart';
-import 'package:clinic_admin/doctor/pages/edit_doctor_page.dart';
 import 'package:flutter/material.dart';
 import 'package:clinic_admin/doctor/data/doctor_service.dart';
 import 'package:clinic_admin/doctor/model/doctor_model.dart';
+import 'package:clinic_admin/doctor/pages/add_doctor_page.dart';
+import 'package:clinic_admin/doctor/pages/doctor_detail_page.dart';
 
 class DoctorPage extends StatefulWidget {
   @override
@@ -12,8 +11,10 @@ class DoctorPage extends StatefulWidget {
 
 class _DoctorPageState extends State<DoctorPage> {
   final DoctorService _doctorService = DoctorService();
-  List<DoctorModel> _doctors = [];
+  List<DoctorModel> _allDoctors = [];
+  List<DoctorModel> _filteredDoctors = [];
   bool _isLoading = true;
+  TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -26,7 +27,8 @@ class _DoctorPageState extends State<DoctorPage> {
     try {
       final doctors = await _doctorService.getAllDoctors();
       setState(() {
-        _doctors = doctors;
+        _allDoctors = doctors;
+        _filteredDoctors = doctors;
         _isLoading = false;
       });
     } catch (e) {
@@ -39,22 +41,13 @@ class _DoctorPageState extends State<DoctorPage> {
     }
   }
 
-  void _navigateToEditDoctor(BuildContext context, DoctorModel doctor) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => DoctorEditPage(doctor: doctor)),
-    );
-    if (result == true) {
-      // Doctor was updated, refresh the list
-      _loadDoctors();
-    }
-  }
-
-  void _navigateToDoctorDetails(BuildContext context, DoctorModel doctor) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => DoctorDetailPage(doctor: doctor)),
-    );
+  void _filterDoctors(String query) {
+    setState(() {
+      _filteredDoctors = _allDoctors.where((doctor) {
+        return doctor.name.toLowerCase().contains(query.toLowerCase()) ||
+            doctor.specialty.toLowerCase().contains(query.toLowerCase());
+      }).toList();
+    });
   }
 
   void _navigateToAddDoctor(BuildContext context) async {
@@ -65,6 +58,13 @@ class _DoctorPageState extends State<DoctorPage> {
     if (result == true) {
       _loadDoctors();
     }
+  }
+
+  void _navigateToDoctorDetails(BuildContext context, DoctorModel doctor) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => DoctorDetailPage(doctor: doctor)),
+    );
   }
 
   void _showDeleteConfirmation(BuildContext context, DoctorModel doctor) {
@@ -120,33 +120,53 @@ class _DoctorPageState extends State<DoctorPage> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _doctors.isEmpty
-              ? const Center(child: Text('No doctors found'))
-              : ListView.builder(
-                  itemCount: _doctors.length,
-                  itemBuilder: (context, index) {
-                    final doctor = _doctors[index];
-                    return ListTile(
-                      title: Text(doctor.name),
-                      subtitle: Text(doctor.specialty),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () =>
-                                _showDeleteConfirmation(context, doctor),
-                          ),
-                        ],
-                      ),
-                      onTap: () {
-                        _navigateToDoctorDetails(context, doctor);
-                      },
-                    );
-                  },
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                labelText: 'Search by name or specialty',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
+              ),
+              onChanged: _filterDoctors,
+            ),
+          ),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _filteredDoctors.isEmpty
+                    ? const Center(child: Text('No doctors found'))
+                    : ListView.builder(
+                        itemCount: _filteredDoctors.length,
+                        itemBuilder: (context, index) {
+                          final doctor = _filteredDoctors[index];
+                          return ListTile(
+                            title: Text(doctor.name),
+                            subtitle: Text(doctor.specialty),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.delete),
+                              onPressed: () =>
+                                  _showDeleteConfirmation(context, doctor),
+                            ),
+                            onTap: () =>
+                                _navigateToDoctorDetails(context, doctor),
+                          );
+                        },
+                      ),
+          ),
+        ],
+      ),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 }
