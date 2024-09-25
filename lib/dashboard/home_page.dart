@@ -49,6 +49,16 @@ class _ClinicHomeScreenState extends State<ClinicHomeScreen> {
       ),
       drawer: MyDrawer(),
       body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              const Color.fromARGB(255, 173, 205, 204)!,
+              const Color.fromARGB(255, 180, 152, 225)!
+            ],
+          ),
+        ),
         child: Column(
           children: [
             SingleChildScrollView(

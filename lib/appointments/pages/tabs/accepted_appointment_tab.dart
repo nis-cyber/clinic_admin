@@ -66,6 +66,7 @@ class AllAcceptedAppointmentsPage extends StatelessWidget {
                           appointmentId: snapshot.data!.docs[index].id,
                           doctorName: appointmentData['doctor_name'],
                           userName: appointmentData['user_name'],
+                          doctorId: appointmentData['doctor_id'],
                           userPhone: appointmentData['user_phone'],
                           date: appointmentData['date'],
                           timeSlot: appointmentData['time_slot'],
@@ -102,6 +103,8 @@ class AllAcceptedAppointmentsPage extends StatelessWidget {
                           _buildInfoRow(
                               'Document', appointmentData['document']),
                           _buildInfoRow('Status', appointmentData['status']),
+                          _buildInfoRow(
+                              'doctorId', appointmentData['doctor_id']),
                         ],
                       ),
                     ),

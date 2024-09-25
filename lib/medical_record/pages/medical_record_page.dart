@@ -10,6 +10,7 @@ class MedicalReportsPage extends StatelessWidget {
   final String userName;
   final String userPhone;
   final String speciality;
+  final String doctorId;
   final String date;
   final String timeSlot;
   final String userId;
@@ -21,6 +22,7 @@ class MedicalReportsPage extends StatelessWidget {
     required this.userPhone,
     required this.date,
     required this.timeSlot,
+    required this.doctorId,
     required this.speciality,
     required this.userId,
   });
@@ -108,16 +110,17 @@ class MedicalReportsPage extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             title: Text(
-                              reportData['diagnosis'] ?? 'Unknown Diagnosis',
+                              reportData['user_name'] ?? 'Unknown Diagnosis',
                               style: const TextStyle(
                                 color: Color(0xFF1E40AF), // Dark Blue for title
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             subtitle: Text(
-                              DateFormat('yyyy-MM-dd – kk:mm').format(
-                                (reportData['timestamp'] as Timestamp).toDate(),
-                              ),
+                              // DateFormat('yyyy-MM-dd – kk:mm').format(
+                              //   (reportData['timestamp'] as Timestamp).toDate(),
+                              // ),
+                              reportData['date'] ?? 'Unknown Doctor',
                               style: const TextStyle(
                                 color: Color(
                                     0xFF6B7280), // Muted Gray for timestamp
@@ -168,6 +171,7 @@ class MedicalReportsPage extends StatelessWidget {
                           userName: userName,
                           userPhone: userPhone,
                           speciality: speciality,
+                          doctorId: doctorId,
                           date: date,
                           timeSlot: timeSlot,
                         ),

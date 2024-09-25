@@ -12,6 +12,7 @@ class InputReportPage extends StatefulWidget {
   final String userPhone;
   final String speciality;
   final String date;
+  final String doctorId;
   final String timeSlot;
   final String userId;
 
@@ -21,6 +22,7 @@ class InputReportPage extends StatefulWidget {
     required this.userName,
     required this.userPhone,
     required this.speciality,
+    required this.doctorId,
     required this.date,
     required this.timeSlot,
     required this.userId,
@@ -95,6 +97,7 @@ class _InputReportPageState extends State<InputReportPage> {
       'user_phone': widget.userPhone,
       'date': widget.date,
       'time_slot': widget.timeSlot,
+      'doctor_id': widget.doctorId,
       'diagnosis': _diagnosisController.text,
       'treatment': _treatmentController.text,
       'medications': _medicationsController.text,
@@ -118,6 +121,10 @@ class _InputReportPageState extends State<InputReportPage> {
 
   @override
   Widget build(BuildContext context) {
+    print('p00-----===============================================');
+
+    print(widget.doctorId);
+    print('p00-----===============================================');
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 173, 205, 204)!,
