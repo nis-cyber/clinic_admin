@@ -1,5 +1,5 @@
 import 'package:clinic_admin/auth/pages/login_page.dart';
-import 'package:clinic_admin/dashboard/home_page.dart';
+import 'package:clinic_admin/main.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -14,7 +14,7 @@ class StatusPage extends StatelessWidget {
         builder: (context, snapshot) {
           // user is logged in
           if (snapshot.hasData) {
-            return ClinicHomeScreen();
+            return MainPage();
           } else {
             return const Loginpage();
           }

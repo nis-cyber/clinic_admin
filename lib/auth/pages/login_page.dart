@@ -1,5 +1,7 @@
 import 'package:clinic_admin/auth/pages/register_page.dart';
+import 'package:clinic_admin/auth/pages/status_page.dart';
 import 'package:clinic_admin/auth/service/clinic_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class Loginpage extends StatefulWidget {
@@ -10,8 +12,6 @@ class Loginpage extends StatefulWidget {
 }
 
 class _LoginpageState extends State<Loginpage> {
-  final _formKey = GlobalKey<FormState>();
-  final _clinicNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final ClinicAuthService _authService = ClinicAuthService();
@@ -23,10 +23,11 @@ class _LoginpageState extends State<Loginpage> {
         _passwordController.text,
       );
       Navigator.of(context)
-          .push(MaterialPageRoute(builder: (context) => const Loginpage()));
-      // Navigate to the next screen after successful sign in
+          .push(MaterialPageRoute(builder: (context) => const StatusPage()));
     } catch (e) {
-      // Handle sign in error
+      if (kDebugMode) {
+        print(e);
+      }
     }
   }
 
@@ -36,7 +37,7 @@ class _LoginpageState extends State<Loginpage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(''), // Empty title to remove the app bar text
+        title: const Text('Login Page'),
         backgroundColor: Colors.blue,
       ),
       body: Container(
@@ -105,7 +106,6 @@ class _LoginpageState extends State<Loginpage> {
               const SizedBox(height: 20.0),
               ElevatedButton(
                 onPressed: _signIn,
-                child: const Text('Login'),
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.white,
                   backgroundColor: Colors.blue,
@@ -113,6 +113,7 @@ class _LoginpageState extends State<Loginpage> {
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
+                child: const Text('Login'),
               ),
               const SizedBox(
                 height: 20,
