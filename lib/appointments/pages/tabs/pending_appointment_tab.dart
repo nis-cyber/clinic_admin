@@ -1,150 +1,178 @@
-import 'package:clinic_admin/appointments/data/appointment_provier.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-class PendingAppointmentTab extends ConsumerWidget {
+class AllPendingAppointmentsPage extends StatelessWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final appointmentsAsyncValue = ref.watch(pendingAppointmentsProvider);
-
+  Widget build(BuildContext context) {
     return Scaffold(
-      body: appointmentsAsyncValue.when(
-        data: (appointments) {
-          if (appointments.isEmpty) {
-            return const Center(child: Text('No pending appointments.'));
-          }
-          return ListView.builder(
-            itemCount: appointments.length,
-            itemBuilder: (context, index) {
-              var appointment = appointments[index];
-              return _buildAppointmentCard(context, ref, appointment);
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(
-          child: Text('Error: $error'),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAppointmentCard(
-      BuildContext context, WidgetRef ref, Map<String, dynamic> data) {
-    DateTime createdAt = (data['createdAt'] as Timestamp).toDate();
-
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ListTile(
-        title: Text('Dr. ${data['doctorName']}'),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Date: ${data['day']}'),
-            Text('Time: ${data['slot']}'),
-            Text('Status: ${data['status']}'),
-            Text(
-                'Booked on: ${DateFormat('MMM d, yyyy HH:mm').format(createdAt)}'),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildStatusIcon(data['status']),
-          ],
-        ),
-        onTap: () => _showAppointmentDetails(context, ref, data),
-      ),
-    );
-  }
-
-  Widget _buildStatusIcon(String status) {
-    IconData iconData;
-    Color color;
-
-    switch (status.toLowerCase()) {
-      case 'booked':
-        iconData = Icons.event_available;
-        color = Colors.green;
-        break;
-      case 'cancelled':
-        iconData = Icons.event_busy;
-        color = Colors.red;
-        break;
-      case 'completed':
-        iconData = Icons.check_circle;
-        color = Colors.blue;
-        break;
-      case 'pending':
-        iconData = Icons.hourglass_bottom;
-        color = Colors.orange;
-        break;
-      default:
-        iconData = Icons.event_note;
-        color = Colors.grey;
-    }
-
-    return Icon(iconData, color: color);
-  }
-
-  void _showAppointmentDetails(BuildContext context, WidgetRef ref,
-      Map<String, dynamic> appointmentData) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Appointment Details'),
-          content: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Doctor: Dr. ${appointmentData['doctorName']}'),
-              Text('Date: ${appointmentData['day']}'),
-              Text('Time: ${appointmentData['slot']}'),
-              Text('Status: ${appointmentData['status']}'),
-              Text(
-                  'Booked on: ${DateFormat('MMM d, yyyy HH:mm').format((appointmentData['createdAt'] as Timestamp).toDate())}'),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              const Color.fromARGB(255, 173, 205, 204)!,
+              const Color.fromARGB(255, 180, 152, 225)!
             ],
           ),
-          actions: [
-            TextButton(
-              child: const Text('Close'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            if (appointmentData['status'].toLowerCase() == 'pending')
-              ElevatedButton(
-                child: const Text('Accept Appointment'),
-                onPressed: () async {
-                  Navigator.of(context).pop();
-                  _acceptAppointment(context, ref, appointmentData);
-                },
-              ),
-          ],
-        );
-      },
+        ),
+        child: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('appointment_pending')
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            }
+
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.data!.docs.isEmpty) {
+              return const Center(child: Text('No pending appointments.'));
+            }
+
+            return ListView.builder(
+              itemCount: snapshot.data!.docs.length,
+              itemBuilder: (context, index) {
+                var appointmentData =
+                    snapshot.data!.docs[index].data() as Map<String, dynamic>;
+                String appointmentId = snapshot.data!.docs[index].id;
+                return Card(
+                  margin: const EdgeInsets.symmetric(
+                      vertical: 8.0, horizontal: 16.0),
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15)),
+                  color: Colors.white,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          appointmentData['doctor_name'],
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.teal[700]),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          appointmentData['doctor_specialty'],
+                          style:
+                              TextStyle(fontSize: 14, color: Colors.teal[500]),
+                        ),
+                        const Divider(height: 20, thickness: 1),
+                        _buildInfoRow(Icons.person, 'Patient',
+                            appointmentData['user_name']),
+                        _buildInfoRow(Icons.phone, 'Phone',
+                            appointmentData['user_phone']),
+                        _buildInfoRow(
+                            Icons.calendar_today,
+                            'Date',
+                            DateFormat('MMMM d, yyyy').format(
+                                DateTime.parse(appointmentData['date']))),
+                        _buildInfoRow(Icons.access_time, 'Time',
+                            appointmentData['time_slot']),
+                        _buildInfoRow(Icons.description, 'Document',
+                            appointmentData['document']),
+                        _buildInfoRow(Icons.info_outline, 'Status',
+                            appointmentData['status']),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildActionButton(
+                              onPressed: () => _acceptAppointment(
+                                  appointmentId, appointmentData),
+                              label: 'Accept',
+                              color: Colors.teal,
+                            ),
+                            _buildActionButton(
+                              onPressed: () =>
+                                  _rejectAppointment(appointmentId),
+                              label: 'Reject',
+                              color: Colors.red[300]!,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
     );
   }
 
-  void _acceptAppointment(BuildContext context, WidgetRef ref,
-      Map<String, dynamic> appointmentData) async {
-    try {
-      final service = ref.read(pendingAppointmentServiceProvider);
-      await service.acceptAppointment(appointmentData);
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: Colors.teal[300]),
+          const SizedBox(width: 8),
+          Text(
+            '$label:',
+            style:
+                TextStyle(fontWeight: FontWeight.w500, color: Colors.grey[600]),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+              child:
+                  Text(value, style: const TextStyle(color: Colors.black87))),
+        ],
+      ),
+    );
+  }
 
-      // Refresh the accepted appointments
-      ref.read(appointmentNotifierProvider.notifier).refresh();
+  Widget _buildActionButton(
+      {required VoidCallback onPressed,
+      required String label,
+      required Color color}) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      child: Text(label),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      ),
+    );
+  }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Appointment accepted successfully!')),
-      );
-    } catch (e) {
-      print('Error accepting appointment: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to accept the appointment: $e')),
-      );
-    }
+  Future<void> _acceptAppointment(
+      String appointmentId, Map<String, dynamic> appointmentData) async {
+    await FirebaseFirestore.instance.collection('accepted_appointments').add({
+      'doctor_name': appointmentData['doctor_name'],
+      'doctor_specialty': appointmentData['doctor_specialty'],
+      'user_name': appointmentData['user_name'],
+      'user_phone': appointmentData['user_phone'],
+      'date': appointmentData['date'],
+      'time_slot': appointmentData['time_slot'],
+      'document': appointmentData['document'],
+      'status': 'accepted',
+      'doctor_id': appointmentData['doctor_id'],
+      'user_id': appointmentData['user_id'],
+    });
+
+    await FirebaseFirestore.instance
+        .collection('appointment_pending')
+        .doc(appointmentId)
+        .delete();
+  }
+
+  Future<void> _rejectAppointment(String appointmentId) async {
+    await FirebaseFirestore.instance
+        .collection('appointment_pending')
+        .doc(appointmentId)
+        .delete();
   }
 }

@@ -1,4 +1,5 @@
 import 'package:clinic_admin/appointments/data/appointment_provier.dart';
+import 'package:clinic_admin/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'pending_appointment_tab.dart';
@@ -35,6 +36,14 @@ class _AppointmentPageState extends ConsumerState<AppointmentPage>
     return Scaffold(
       appBar: AppBar(
         title: Text('Appointments'),
+        backgroundColor: Color.fromARGB(255, 173, 205, 204),
+        leading: IconButton(
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) {
+                return const MainPage();
+              }));
+            },
+            icon: Icon(Icons.arrow_back_ios)),
         bottom: TabBar(
           controller: _tabController,
           tabs: [
@@ -43,12 +52,24 @@ class _AppointmentPageState extends ConsumerState<AppointmentPage>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          PendingAppointmentTab(),
-          AcceptedAppointmentTab(),
-        ],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              const Color.fromARGB(255, 173, 205, 204)!,
+              const Color.fromARGB(255, 180, 152, 225)!
+            ],
+          ),
+        ),
+        child: TabBarView(
+          controller: _tabController,
+          children: [
+            AllPendingAppointmentsPage(),
+            AllAcceptedAppointmentsPage(),
+          ],
+        ),
       ),
     );
   }
