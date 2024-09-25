@@ -1,65 +1,128 @@
 import 'package:clinic_admin/doctor/pages/edit_doctor_page.dart';
 import 'package:flutter/material.dart';
-import 'package:clinic_admin/doctor/model/doctor_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 class DoctorDetailPage extends StatelessWidget {
-  final DoctorModel doctor;
+  final String doctorId;
 
-  DoctorDetailPage({Key? key, required this.doctor}) : super(key: key);
+  DoctorDetailPage({required this.doctorId});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CustomScrollView(
-        slivers: <Widget>[
-          SliverAppBar(
-            expandedHeight: 200.0,
-            floating: false,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              title: Text(doctor.name),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.blue.shade800, Colors.blue.shade500],
-                  ),
+      appBar: AppBar(
+        title: const Text('Doctor Details'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EditDoctorPage(doctorId: doctorId),
                 ),
-                child: Center(
-                  child: Icon(Icons.person, size: 80, color: Colors.white),
-                ),
-              ),
-            ),
+              );
+            },
           ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildInfoCard(),
-                  SizedBox(height: 20),
-                  Text('Available Slots',
-                      style: Theme.of(context).textTheme.titleLarge),
-                  SizedBox(height: 10),
-                  _buildAvailableSlotsCard(context),
-                ],
-              ),
-            ),
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: () => _confirmDelete(context),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToEditDoctor(context),
-        child: Icon(Icons.edit),
-        tooltip: 'Edit Doctor',
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('doctors')
+            .doc(doctorId)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || !snapshot.data!.exists) {
+            return const Center(child: Text('Doctor not found.'));
+          }
+
+          var doctorData = snapshot.data!.data() as Map<String, dynamic>;
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildInfoCard('Doctor Information', [
+                  _buildInfoRow('Name', doctorData['name']),
+                  _buildInfoRow('Specialty', doctorData['specialty']),
+                ]),
+                const SizedBox(height: 16),
+                _buildAvailabilitySection(doctorData['availability']),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildInfoCard() {
+  // Delete confirmation dialog
+  void _confirmDelete(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Doctor'),
+          content: const Text('Are you sure you want to delete this doctor?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Delete'),
+              onPressed: () {
+                _deleteDoctor(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Delete doctor from Firebase
+  Future<void> _deleteDoctor(BuildContext context) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('doctors')
+          .doc(doctorId)
+          .delete();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Doctor deleted successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.of(context).pop(); // Close the dialog
+      Navigator.of(context).pop(); // Go back to the previous screen
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete doctor: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Widget _buildInfoCard(String title, List<Widget> children) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -68,93 +131,91 @@ class DoctorDetailPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildInfoRow(
-                Icons.medical_services, 'Specialty', doctor.specialty),
-            Divider(),
-            _buildInfoRow(
-                Icons.schedule,
-                'Total Available Slots',
-                doctor.availableSlots.values
-                    .expand((slots) => slots)
-                    .length
-                    .toString()),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...children,
           ],
         ),
       ),
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value) {
+  Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
-          Icon(icon, color: Colors.blue.shade700),
-          SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label,
-                    style:
-                        TextStyle(fontSize: 14, color: Colors.grey.shade600)),
-                SizedBox(height: 4),
-                Text(value,
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              ],
-            ),
+          Text(
+            '$label:',
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
+          const SizedBox(width: 8),
+          Text(value),
         ],
       ),
     );
   }
 
-  Widget _buildAvailableSlotsCard(BuildContext context) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: doctor.availableSlots.entries.map((entry) {
-            return _buildDaySlots(context, entry.key, entry.value);
-          }).toList(),
-        ),
-      ),
-    );
-  }
+  Widget _buildAvailabilitySection(Map<String, dynamic> availability) {
+    List<Widget> availabilityWidgets = [];
 
-  Widget _buildDaySlots(BuildContext context, String day, List<String> slots) {
-    return ExpansionTile(
-      title: Text(day, style: TextStyle(fontWeight: FontWeight.bold)),
-      children: [
-        Wrap(
-          spacing: 8.0,
-          runSpacing: 8.0,
-          children: slots
-              .map((slot) => Chip(
-                    label: Text(slot),
-                    backgroundColor: Colors.blue.shade100,
-                    labelStyle: TextStyle(color: Colors.blue.shade800),
-                  ))
-              .toList(),
+    availability.forEach((date, slots) {
+      availabilityWidgets.add(
+        Card(
+          margin: const EdgeInsets.only(bottom: 16),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  DateFormat('EEEE, MMMM d, y').format(DateTime.parse(date)),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: (slots as List<dynamic>).map((slot) {
+                    return Chip(
+                      label: Text(slot),
+                      backgroundColor: Colors.blue.shade100,
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
         ),
+      );
+    });
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Availability',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.blue,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...availabilityWidgets,
       ],
     );
-  }
-
-  void _navigateToEditDoctor(BuildContext context) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => DoctorEditPage(doctor: doctor)),
-    );
-    if (result == true) {
-      // Doctor was updated, you might want to refresh the details
-      // You could use a state management solution or pass a callback to refresh the data
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Doctor information updated')),
-      );
-    }
   }
 }

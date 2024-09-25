@@ -1,189 +1,253 @@
 import 'package:flutter/material.dart';
-import 'package:clinic_admin/doctor/data/doctor_service.dart';
-import 'package:clinic_admin/doctor/model/doctor_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
-class DoctorEditPage extends StatefulWidget {
-  final DoctorModel doctor;
+class EditDoctorPage extends StatefulWidget {
+  final String doctorId;
 
-  DoctorEditPage({Key? key, required this.doctor}) : super(key: key);
+  EditDoctorPage({required this.doctorId});
 
   @override
-  _DoctorEditPageState createState() => _DoctorEditPageState();
+  _EditDoctorPageState createState() => _EditDoctorPageState();
 }
 
-class _DoctorEditPageState extends State<DoctorEditPage> {
+class _EditDoctorPageState extends State<EditDoctorPage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  late String _selectedSpecialty;
-  late Map<String, List<String>> _availableSlots;
+  String name = '';
+  String specialty = '';
+  Map<DateTime, List<String>> availabilityMap = {};
 
-  final DoctorService _doctorService = DoctorService();
-
-  final List<String> _specialties = [
-    'General Practitioner',
-    'Pediatrician',
-    'Cardiologist',
-    'Dermatologist',
-    'Neurologist',
-    'Orthopedist',
-    'Psychiatrist',
-    'Oncologist',
-    'Gynecologist',
-    'Urologist',
+  List<String> specialties = [
+    'Cardiology',
+    'Dermatology',
+    'Neurology',
+    'Orthopedics',
+    'Pediatrics',
+    'Psychiatry',
+    'Other'
   ];
 
-  final List<String> _daysOfWeek = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday'
-  ];
-
-  final List<String> _timeSlots = [
-    '10:00 AM',
-    '10:30 AM',
-    '11:00 AM',
-    '11:30 AM',
-    '12:00 PM',
-    '12:30 PM',
-    '01:00 PM',
-    '01:30 PM',
-    '02:00 PM',
-    '02:30 PM',
-    '03:00 PM',
-    '03:30 PM',
-    '04:00 PM',
-    '04:30 PM',
-    '05:00 PM',
-    '05:30 PM',
+  List<String> timeSlots = [
+    '10:00 - 10:30',
+    '10:30 - 11:00',
+    '11:00 - 11:30',
+    '11:30 - 12:00',
+    '12:00 - 12:30',
+    '12:30 - 13:00',
+    '13:00 - 13:30',
+    '13:30 - 14:00',
+    '14:00 - 14:30',
+    '14:30 - 15:00',
+    '15:00 - 15:30',
+    '15:30 - 16:00',
+    '16:00 - 16:30',
+    '16:30 - 17:00'
   ];
 
   @override
   void initState() {
     super.initState();
-    _nameController.text = widget.doctor.name;
-    _selectedSpecialty = widget.doctor.specialty;
-    _availableSlots = Map.from(widget.doctor.availableSlots);
+    _loadDoctorData();
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
+  Future<void> _loadDoctorData() async {
+    DocumentSnapshot doctorSnapshot = await FirebaseFirestore.instance
+        .collection('doctors')
+        .doc(widget.doctorId)
+        .get();
+
+    if (doctorSnapshot.exists) {
+      var doctorData = doctorSnapshot.data() as Map<String, dynamic>;
+
+      setState(() {
+        name = doctorData['name'];
+        specialty = doctorData['specialty'];
+        availabilityMap = (doctorData['availability'] as Map<String, dynamic>)
+            .map((key, value) =>
+                MapEntry(DateTime.parse(key), List<String>.from(value)));
+      });
+    }
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            primaryColor: Colors.blue,
+            colorScheme: const ColorScheme.light(primary: Colors.blue),
+            buttonTheme:
+                const ButtonThemeData(textTheme: ButtonTextTheme.primary),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        if (!availabilityMap.containsKey(picked)) {
+          availabilityMap[picked] = [];
+        }
+      });
+    }
+  }
+
+  void _submitForm() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+
+      FirebaseFirestore.instance
+          .collection('doctors')
+          .doc(widget.doctorId)
+          .update({
+        'name': name,
+        'specialty': specialty,
+        'availability': availabilityMap.map((key, value) =>
+            MapEntry(DateFormat('yyyy-MM-dd').format(key), value)),
+      }).then((value) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Doctor details updated successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop();
+      }).catchError((error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update doctor details: $error'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Edit Doctor')),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: EdgeInsets.all(16.0),
-          children: [
-            TextFormField(
-              controller: _nameController,
-              decoration: InputDecoration(labelText: 'Name'),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a name';
-                }
-                return null;
-              },
-            ),
-            DropdownButtonFormField<String>(
-              value: _selectedSpecialty,
-              decoration: InputDecoration(labelText: 'Specialty'),
-              items: _specialties.map((String specialty) {
-                return DropdownMenuItem(
-                  value: specialty,
-                  child: Text(specialty),
+      appBar: AppBar(
+        title: const Text('Edit Doctor Details'),
+        backgroundColor: Colors.blue,
+      ),
+      body: Container(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: <Widget>[
+              TextFormField(
+                initialValue: name,
+                decoration: InputDecoration(
+                  labelText: 'Doctor Name',
+                  prefixIcon: const Icon(Icons.person, color: Colors.blue),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter the doctor\'s name';
+                  }
+                  return null;
+                },
+                onSaved: (value) => name = value!,
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: specialty,
+                decoration: InputDecoration(
+                  labelText: 'Specialty',
+                  prefixIcon:
+                      const Icon(Icons.local_hospital, color: Colors.blue),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                items: specialties.map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    specialty = value!;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please select a specialty';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                child: const Text('Add Date'),
+                onPressed: () => _selectDate(context),
+              ),
+              const SizedBox(height: 16),
+              ...availabilityMap.entries.map((entry) {
+                return Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          DateFormat('yyyy-MM-dd').format(entry.key),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        Wrap(
+                          spacing: 8,
+                          children: timeSlots.map((slot) {
+                            bool isSelected = entry.value.contains(slot);
+                            return FilterChip(
+                              label: Text(slot),
+                              selected: isSelected,
+                              onSelected: (bool selected) {
+                                setState(() {
+                                  if (selected) {
+                                    entry.value.add(slot);
+                                  } else {
+                                    entry.value.remove(slot);
+                                  }
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
                 );
-              }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedSpecialty = newValue!;
-                });
-              },
-            ),
-            SizedBox(height: 20),
-            Text('Available Slots:',
-                style: Theme.of(context).textTheme.titleLarge),
-            ..._buildAvailableSlotsWidgets(),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _submitForm,
-              child: Text('Update Doctor'),
-            ),
-          ],
+              }),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: _submitForm,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    'Save Changes',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
-  }
-
-  List<Widget> _buildAvailableSlotsWidgets() {
-    List<Widget> widgets = [];
-    for (var day in _daysOfWeek) {
-      widgets.add(
-        ExpansionTile(
-          title: Text(day),
-          children: [
-            Wrap(
-              spacing: 8.0,
-              runSpacing: 4.0,
-              children: _timeSlots.map((slot) {
-                bool isSelected = _availableSlots[day]?.contains(slot) ?? false;
-                return FilterChip(
-                  label: Text(slot),
-                  selected: isSelected,
-                  onSelected: (bool selected) {
-                    setState(() {
-                      if (selected) {
-                        _availableSlots[day] = [
-                          ...(_availableSlots[day] ?? []),
-                          slot
-                        ];
-                      } else {
-                        _availableSlots[day] = (_availableSlots[day] ?? [])
-                          ..remove(slot);
-                      }
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-      );
-    }
-    return widgets;
-  }
-
-  void _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      try {
-        final updatedDoctor = DoctorModel(
-          id: widget.doctor.id,
-          name: _nameController.text,
-          specialty: _selectedSpecialty,
-          availableSlots: _availableSlots,
-        );
-
-        await _doctorService.updateDoctor(updatedDoctor);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Doctor updated successfully')),
-        );
-
-        Navigator.pop(context, true);
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update doctor. Please try again.')),
-        );
-      }
-    }
   }
 }
