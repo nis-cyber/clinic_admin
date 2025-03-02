@@ -1,0 +1,2 @@
+/Users/nishantkharel/Desktop/IT Project/clinic_admin/android/app/.cxx/Debug/4918a6be/x86/CMakeFiles/edit_cache.dir
+/Users/nishantkharel/Desktop/IT Project/clinic_admin/android/app/.cxx/Debug/4918a6be/x86/CMakeFiles/rebuild_cache.dir

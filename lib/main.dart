@@ -1,9 +1,9 @@
-import 'package:clinic_admin/appointments/pages/tabs/appointment_page.dart';
+import 'package:clinic_admin/appointments/appointment_page.dart';
 import 'package:clinic_admin/auth/pages/status_page.dart';
 import 'package:clinic_admin/api/firebase_options.dart';
 import 'package:clinic_admin/dashboard/home_page.dart';
-import 'package:clinic_admin/dashboard/widgets/my_bottom_nav.dart';
-import 'package:clinic_admin/other/profile_page.dart';
+import 'package:clinic_admin/common/widgets/my_bottom_nav.dart';
+import 'package:clinic_admin/doctor/doctor_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,7 +48,7 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   final _pages = [
     ClinicHomeScreen(),
-    const ProfilePage(),
+    DoctorPage(),
     AppointmentPage(),
   ];
 

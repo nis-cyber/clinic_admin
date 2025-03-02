@@ -1,9 +1,5 @@
-import 'package:clinic_admin/medical_record/pages/create_medical_record_page.dart';
-import 'package:clinic_admin/other/patient_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Appointment {
@@ -89,6 +85,8 @@ final patientProvider =
 
 // UI Components
 class SendMedicalReportButton extends ConsumerWidget {
+  const SendMedicalReportButton({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ElevatedButton(
@@ -104,11 +102,13 @@ class SendMedicalReportButton extends ConsumerWidget {
 }
 
 class PatientSelectionSheet extends ConsumerWidget {
+  const PatientSelectionSheet({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appointmentsAsyncValue = ref.watch(acceptedAppointmentsProvider);
 
-    return Container(
+    return SizedBox(
       height: MediaQuery.of(context).size.height * 0.6,
       child: Column(
         children: [
@@ -141,7 +141,7 @@ class PatientSelectionSheet extends ConsumerWidget {
 class PatientListItem extends ConsumerWidget {
   final String patientId;
 
-  const PatientListItem({Key? key, required this.patientId}) : super(key: key);
+  const PatientListItem({super.key, required this.patientId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -169,8 +169,7 @@ class PatientListItem extends ConsumerWidget {
 class PatientConfirmationDialog extends StatelessWidget {
   final Patient patient;
 
-  const PatientConfirmationDialog({Key? key, required this.patient})
-      : super(key: key);
+  const PatientConfirmationDialog({super.key, required this.patient});
 
   @override
   Widget build(BuildContext context) {

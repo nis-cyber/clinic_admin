@@ -135,7 +135,6 @@ class _ClinicRegisterPageState extends State<ClinicRegisterPage> {
                 SizedBox(height: 20.0),
                 ElevatedButton(
                   onPressed: _register,
-                  child: Text('Register'),
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.white,
                     backgroundColor: Colors.blue,
@@ -143,6 +142,7 @@ class _ClinicRegisterPageState extends State<ClinicRegisterPage> {
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
+                  child: Text('Register'),
                 ),
               ],
             ),

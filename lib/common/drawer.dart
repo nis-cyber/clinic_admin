@@ -1,5 +1,5 @@
-import 'package:clinic_admin/appointments/pages/tabs/appointment_page.dart';
-import 'package:clinic_admin/dashboard/home_page.dart';
+import 'package:clinic_admin/appointments/appointment_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class MyDrawer extends StatelessWidget {
@@ -12,8 +12,8 @@ class MyDrawer extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              const Color.fromARGB(255, 173, 205, 204)!,
-              const Color.fromARGB(255, 180, 152, 225)!
+              const Color.fromARGB(255, 173, 205, 204),
+              const Color.fromARGB(255, 180, 152, 225)
             ],
           ),
         ),
@@ -37,26 +37,18 @@ class MyDrawer extends StatelessWidget {
               SizedBox(height: 20),
               Divider(),
               SizedBox(height: 20),
-
               ListTile(
                 leading: const Icon(Icons.home),
                 title: const Text('Home'),
                 onTap: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => ClinicHomeScreen()),
-                  );
+                  Navigator.pop(context);
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.person),
                 title: const Text('Profile'),
                 onTap: () {
-                  // Update with correct profile screen
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            ClinicHomeScreen()), // Update this if needed
-                  );
+                  Navigator.pop(context);
                 },
               ),
               ListTile(
@@ -80,13 +72,13 @@ class MyDrawer extends StatelessWidget {
                 title: const Text('Manage Queue'),
                 onTap: () {},
               ),
-
-              const Divider(), // Add a divider
+              const Divider(),
               ListTile(
                 leading: const Icon(Icons.logout),
                 title: const Text('Logout'),
                 onTap: () {
-                  // Handle logout functionality here
+                  signOut();
+                  Navigator.of(context).pushNamed('/login');
                 },
               ),
             ],
@@ -94,5 +86,13 @@ class MyDrawer extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  MyDrawer({super.key});
+
+  Future<void> signOut() async {
+    await _auth.signOut();
   }
 }

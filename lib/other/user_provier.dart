@@ -1,6 +1,5 @@
 import 'package:clinic_admin/other/profile_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Assuming you have these classes defined as shown in your code
 // import 'path_to_your_models/appointment.dart';
