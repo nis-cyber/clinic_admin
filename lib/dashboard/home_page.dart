@@ -17,8 +17,10 @@ class _ClinicHomeScreenState extends State<ClinicHomeScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFADD3CC),
         centerTitle: true,
-        title: const Text('Clinic Home',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Clinic Home',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
       ),
       drawer: MyDrawer(),
       body: Container(
@@ -41,9 +43,10 @@ class _ClinicHomeScreenState extends State<ClinicHomeScreen> {
               const Text(
                 'Welcome to Your Clinic!',
                 style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white),
+                  fontSize: 28,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
               ),
               const SizedBox(height: 10),
               const Text(
@@ -51,160 +54,73 @@ class _ClinicHomeScreenState extends State<ClinicHomeScreen> {
                 style: TextStyle(fontSize: 16, color: Colors.white70),
               ),
               const SizedBox(height: 30),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
+              Expanded(
+                child: GridView(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 1,
+                  ),
                   children: [
-                    SizedBox(
-                      height: 180,
-                      width: 180,
-                      child: StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('appointment_pending')
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          if (snapshot.hasError) {
-                            return Text(
-                              'Error: ${snapshot.error}',
-                              style: const TextStyle(color: Colors.red),
-                            );
-                          }
-
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const CircularProgressIndicator();
-                          }
-
-                          int pendingBookings = snapshot.data!.docs.length;
-
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 10.0),
-                            child: _buildCard(
-                              context,
-                              icon: Icons.pending_actions,
-                              title: 'Pending Bookings: $pendingBookings',
-                            ),
-                          );
-                        },
-                      ),
+                    _buildStatCard(
+                      context,
+                      icon: Icons.pending_actions,
+                      title: 'Pending Bookings',
+                      stream: FirebaseFirestore.instance
+                          .collection('appointment_pending')
+                          .snapshots(),
                     ),
-                    const Spacer(),
-                    SizedBox(
-                      height: 180,
-                      width: 180,
-                      child: StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('accepted_appointments')
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          if (snapshot.hasError) {
-                            return Text(
-                              'Error: ${snapshot.error}',
-                              style: const TextStyle(color: Colors.red),
-                            );
-                          }
-
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const CircularProgressIndicator();
-                          }
-
-                          int pendingBookings = snapshot.data!.docs.length;
-
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 10.0),
-                            child: _buildCard(
-                              context,
-                              icon: Icons.done,
-                              title: 'Accepted Bookings: $pendingBookings',
-                            ),
-                          );
-                        },
-                      ),
+                    _buildStatCard(
+                      context,
+                      icon: Icons.done,
+                      title: 'Accepted Bookings',
+                      stream: FirebaseFirestore.instance
+                          .collection('accepted_appointments')
+                          .snapshots(),
+                    ),
+                    _buildStatCard(
+                      context,
+                      icon: Icons.local_hospital,
+                      title: 'Available Doctors',
+                      stream: FirebaseFirestore.instance
+                          .collection('doctors')
+                          .snapshots(),
+                    ),
+                    _buildStatCard(
+                      context,
+                      icon: Icons.description,
+                      title: 'Reports Generated',
+                      stream: FirebaseFirestore.instance
+                          .collection('medical_reports')
+                          .snapshots(),
                     ),
                   ],
                 ),
               ),
-              ElevatedButton(
+              // const SizedBox(height: 20),
+              Center(
+                child: ElevatedButton(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => AdminQueuePage()),
+                      MaterialPageRoute(
+                        builder: (context) => AdminQueuePage(),
+                      ),
                     );
                   },
-                  child: Text("Queue")),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      height: 180,
-                      width: 180,
-                      child: StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('doctors')
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          if (snapshot.hasError) {
-                            return Text(
-                              'Error: ${snapshot.error}',
-                              style: const TextStyle(color: Colors.red),
-                            );
-                          }
-
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const CircularProgressIndicator();
-                          }
-
-                          int pendingBookings = snapshot.data!.docs.length;
-
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 10.0),
-                            child: _buildCard(
-                              context,
-                              icon: Icons.local_hospital,
-                              title: 'Available Doctors: $pendingBookings',
-                            ),
-                          );
-                        },
-                      ),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 16,
                     ),
-                    const Spacer(),
-                    SizedBox(
-                      height: 180,
-                      width: 180,
-                      child: StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('medical_reports')
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          if (snapshot.hasError) {
-                            return Text(
-                              'Error: ${snapshot.error}',
-                              style: const TextStyle(color: Colors.red),
-                            );
-                          }
-
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const CircularProgressIndicator();
-                          }
-
-                          int pendingBookings = snapshot.data!.docs.length;
-
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 10.0),
-                            child: _buildCard(
-                              context,
-                              icon: Icons.description,
-                              title: 'Report Generated: $pendingBookings',
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFFB499E1),
+                  ),
+                  child: const Text(
+                    'View Queue',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],
@@ -214,31 +130,69 @@ class _ClinicHomeScreenState extends State<ClinicHomeScreen> {
     );
   }
 
-  Widget _buildCard(BuildContext context,
-      {required IconData icon, required String title, VoidCallback? onTap}) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      color: Colors.white,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 40, color: Theme.of(context).primaryColor),
-              const SizedBox(height: 10),
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w500)),
-            ],
+  Widget _buildStatCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required Stream<QuerySnapshot> stream,
+  }) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: stream,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error: ${snapshot.error}',
+              style: const TextStyle(color: Colors.red),
+            ),
+          );
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        int count = snapshot.data!.docs.length;
+
+        return Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-        ),
-      ),
+          color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 40,
+                  color: Theme.of(context).primaryColor,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  '$count',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

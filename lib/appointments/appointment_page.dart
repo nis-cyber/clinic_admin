@@ -1,3 +1,4 @@
+import 'package:clinic_admin/appointments/from_queue_appointment_tab.dart';
 import 'package:clinic_admin/common/drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,7 +19,7 @@ class _AppointmentPageState extends ConsumerState<AppointmentPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -39,6 +40,7 @@ class _AppointmentPageState extends ConsumerState<AppointmentPage>
           tabs: [
             Tab(text: 'Pending'),
             Tab(text: 'Accepted'),
+            Tab(text: 'From Queue')
           ],
         ),
       ),
@@ -59,6 +61,7 @@ class _AppointmentPageState extends ConsumerState<AppointmentPage>
           children: [
             AllPendingAppointmentsPage(),
             AllAcceptedAppointmentsPage(),
+            FromQueueAppointmentTab(),
           ],
         ),
       ),

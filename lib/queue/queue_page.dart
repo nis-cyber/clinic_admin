@@ -171,156 +171,100 @@ class AdminQueuePage extends StatelessWidget {
   }
 
   void _cancelQueue(BuildContext context, Map<String, dynamic> data) async {
-    // Delete the queue entry
-    await FirebaseFirestore.instance
-        .collection('queues')
-        .doc(data['id'])
-        .delete();
-
-    // Show a success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Queue entry cancelled successfully.'),
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
-
-  void _appointUser(BuildContext context, Map<String, dynamic> data) async {
     try {
-      final QuerySnapshot appointmentSnapshot = await FirebaseFirestore.instance
-          .collection('appointment_pending')
-          .get();
+      await FirebaseFirestore.instance
+          .collection('queues')
+          .doc(data['id'])
+          .delete();
 
-      final List<Map<String, dynamic>> appointments = [];
-      for (final doc in appointmentSnapshot.docs) {
-        final appointmentData = doc.data() as Map<String, dynamic>;
-        appointments.add(
-          appointmentData,
-        );
-      }
-
-      final bool isDataFound = _checkIfDataExists(appointments, data);
-
-      if (!isDataFound) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Time slot no longer available!')),
-        );
-        return;
-      } else {
-        final batch = FirebaseFirestore.instance.batch();
-        final appointmentRef = FirebaseFirestore.instance
-            .collection('appointments_from_queue')
-            .doc();
-        batch.set(appointmentRef, {
-          'doctorId': data['doctorId'],
-          'doctorName': data['doctorName'],
-          'doctorSpecialty': data['doctorSpecialty'],
-          'date': data['date'],
-          'timeSlot': data['timeSlot'],
-          'userId': data['userId'],
-          'timestamp': DateTime.now(),
-          'status': 'Pending',
-          'name': data['name'],
-          'email': data['email'],
-          'phone': data['phone'],
-        });
-
-        await EmailService.sendConfirmationEmail(
-          userName: data['name'],
-          userEmail: data['email'],
-          date: data['date'],
-          timeSlot: data['timeSlot'],
-          doctorName: data['doctorName'],
-        );
-
-        // Fetch data from the appointment_pending collection
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User appointed successfully!')),
-        );
-        return;
-      }
-
-      // final date = data['date'];
-      // final timeSlot = data['timeSlot'];
-
-      // // Get doctor document
-      // final doctorRef =
-      //     FirebaseFirestore.instance.collection('doctors').doc(doctorId);
-      // final doctorDoc = await doctorRef.get();
-
-      // if (!doctorDoc.exists) {
-      //   ScaffoldMessenger.of(context).showSnackBar(
-      //     const SnackBar(content: Text('Doctor not found!')),
-      //   );
-      //   return;
-      // }
-
-      // // Get availability data
-      // final doctorData = doctorDoc.data()!;
-      // final availability =
-      //     (doctorData['availability'] as Map<String, dynamic>?) ?? {};
-      // final slots = (availability[date] as List<dynamic>?) ?? [];
-
-      // // Check if slot is already booked
-      // final isAlreadyBooked = slots.contains('$timeSlot (Booked)');
-      // if (isAlreadyBooked) {
-      //   ScaffoldMessenger.of(context).showSnackBar(
-      //     const SnackBar(content: Text('This slot is already booked!')),
-      //   );
-      //   return;
-      // }
-
-      // // Verify original slot exists
-      // final slotIndex = slots.indexOf(timeSlot);
-      // if (slotIndex == -1) {
-
-      // // Create batch for atomic operations
-
-      // // 1. Add to appointments
-
-      // // 2. Remove from queue
-      // final queueRef =
-      //     FirebaseFirestore.instance.collection('queues').doc(data['id']);
-      // batch.delete(queueRef);
-
-      // // 3. Update doctor availability
-      // final updatedSlots = List<dynamic>.from(slots);
-      // updatedSlots[slotIndex] = '$timeSlot (Booked)';
-      // batch.update(doctorRef, {'availability.$date': updatedSlots});
-
-      // // Commit all operations atomically
-      // await batch.commit();
-
-      // ScaffoldMessenger.of(context).showSnackBar(
-      //   const SnackBar(content: Text('User appointed successfully!')),
-      // );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Queue entry cancelled successfully.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
     }
   }
-}
 
-bool _checkIfDataExists(
-    List<Map<String, dynamic>> appointments, Map<String, dynamic> data) {
-  final String doctorId = data['doctorId'];
-  final String date = data['date'];
-  final String timeSlot = data['timeSlot'];
+  void _appointUser(BuildContext context, Map<String, dynamic> data) async {
+    try {
+      final doctorId = data['doctorId'];
+      final date = data['date'];
+      final timeSlot = data['timeSlot'];
 
-  bool isValid = false;
-  for (var i = 0; i < appointments.length; i++) {
-    final appointment = appointments[i];
-    if (appointment['doctor_id'] == doctorId &&
-        appointment['date'] == date &&
-        appointment['time_slot'] ==
-            timeSlot.replaceAll("(Booked)", "").trim()) {
-      isValid = true;
-      break;
+      // Check if the slot is already booked
+      final slotBooked = await _isSlotBooked(doctorId, date, timeSlot);
+
+      if (slotBooked) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Time slot is already booked!')),
+        );
+        return;
+      }
+
+      // Create a batch to perform multiple operations atomically
+      final batch = FirebaseFirestore.instance.batch();
+
+      // Add to appointments_from_queue
+      final appointmentRef = FirebaseFirestore.instance
+          .collection('appointments_from_queue')
+          .doc();
+      batch.set(appointmentRef, {
+        'doctorId': doctorId,
+        'doctorName': data['doctorName'],
+        'doctorSpecialty': data['doctorSpecialty'],
+        'date': date,
+        'timeSlot': timeSlot,
+        'userId': data['userId'],
+        'timestamp': DateTime.now(),
+        'status': 'Booked',
+        'name': data['name'],
+        'email': data['email'],
+        'phone': data['phone'],
+      });
+
+      // Remove from queues
+      final queueRef =
+          FirebaseFirestore.instance.collection('queues').doc(data['id']);
+      batch.delete(queueRef);
+
+      // Commit the batch
+      await batch.commit();
+
+      // Send confirmation email
+      await EmailService.sendConfirmationEmail(
+        userName: data['name'],
+        userEmail: data['email'],
+        date: date,
+        timeSlot: timeSlot,
+        doctorName: data['doctorName'],
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User appointed successfully!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     }
   }
-  return isValid;
+
+  Future<bool> _isSlotBooked(
+      String doctorId, String date, String timeSlot) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('appointments_from_queue')
+        .where('doctorId', isEqualTo: doctorId)
+        .where('date', isEqualTo: date)
+        .where('timeSlot', isEqualTo: timeSlot)
+        .get();
+
+    return snapshot.docs.isNotEmpty;
+  }
 }
 
 class _QueuePositionBadge extends StatelessWidget {
