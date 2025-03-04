@@ -57,8 +57,8 @@ class _ClinicHomeScreenState extends State<ClinicHomeScreen> {
                 child: GridView(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 1,
+                    mainAxisSpacing: 10,
                     childAspectRatio: 1,
                   ),
                   children: [

@@ -44,7 +44,6 @@ class _AppointmentPageState extends ConsumerState<AppointmentPage>
           ],
         ),
       ),
-      drawer: MyDrawer(),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
