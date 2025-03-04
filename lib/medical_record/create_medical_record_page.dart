@@ -97,7 +97,11 @@ class _InputReportPageState extends State<InputReportPage> {
       return;
     }
 
-    await FirebaseFirestore.instance.collection('medical_reports').add({
+    // Create a new document reference to get the auto-generated ID
+    DocumentReference docRef = FirebaseFirestore.instance.collection('medical_reports').doc();
+
+    await docRef.set({
+      'report_id': docRef.id, // Store the generated document ID
       'appointment_id': widget.appointmentId,
       'doctor_name': widget.doctorName,
       'userId': widget.userId,
@@ -126,6 +130,7 @@ class _InputReportPageState extends State<InputReportPage> {
 
     Navigator.pop(context);
   }
+
 
   @override
   Widget build(BuildContext context) {

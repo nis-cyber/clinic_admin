@@ -65,7 +65,6 @@ class _DoctorPageState extends State<DoctorPage> {
           ),
         ],
       ),
-      drawer: MyDrawer(),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(

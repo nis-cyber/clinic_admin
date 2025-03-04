@@ -54,12 +54,20 @@ class AllPendingAppointmentsPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          appointmentData['doctor_name'],
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.teal[700]),
+                        Row(
+                          children: [
+                            Text(
+                              appointmentData['doctor_name'],
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.teal[700]),
+                            ),
+                            const Spacer(),
+                            Text(DateFormat('yyyy-MM-dd HH:mm').format(appointmentData['timestamp'].toDate())),
+
+
+                          ],
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -81,6 +89,7 @@ class AllPendingAppointmentsPage extends StatelessWidget {
                             appointmentData['time_slot']),
                         _buildInfoRow(Icons.info_outline, 'Status',
                             appointmentData['status']),
+
                         const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -163,8 +172,10 @@ class AllPendingAppointmentsPage extends StatelessWidget {
         'doctor_specialty': appointmentData['doctor_specialty'],
         'user_name': appointmentData['user_name'],
         'user_phone': appointmentData['user_phone'],
+        'user_email': appointmentData['user_email'],
         'date': appointmentData['date'],
         'time_slot': appointmentData['time_slot'],
+
         'status': 'accepted',
         'doctor_id': appointmentData['doctor_id'],
         'user_id': appointmentData['user_id'],
@@ -194,14 +205,14 @@ class AllPendingAppointmentsPage extends StatelessWidget {
 
   /// Function to handle appointment rejection and assign to next user in queue
   Future<void> _rejectAppointment(
-    BuildContext context,
-    String appointmentId,
-    String doctorId,
-    String doctorName,
-    String doctorSpecialty,
-    String date,
-    String timeSlot,
-  ) async {
+      BuildContext context,
+      String appointmentId,
+      String doctorId,
+      String doctorName,
+      String doctorSpecialty,
+      String date,
+      String timeSlot,
+      ) async {
     try {
       // Step 1: First make the doctor's time slot available in the database
       await _makeSlotAvailable(doctorId, date, timeSlot);
@@ -214,28 +225,44 @@ class AllPendingAppointmentsPage extends StatelessWidget {
           .where('date', isEqualTo: date)
           .where('timeSlot', isEqualTo: timeSlot)
           .orderBy(
-              'timestamp') // Order by timestamp to get the first person who joined
+          'timestamp') // Order by timestamp to get the first person who joined
           .limit(1) // Get only the first person in the queue
           .get();
 
       print(
           "Step 2: Queue check completed. Found: ${queueSnapshot.docs.length} users"); // Debug print
 
-      // Step 3: Delete the current appointment
+      // Step 3: Add the rejected appointment to "cancled_appointment" collection
+      DocumentSnapshot appointmentSnapshot = await FirebaseFirestore.instance
+          .collection('appointment_pending')
+          .doc(appointmentId)
+          .get();
+
+      if (appointmentSnapshot.exists) {
+        Map<String, dynamic> appointmentData = appointmentSnapshot.data() as Map<String, dynamic>;
+        await FirebaseFirestore.instance.collection('cancled_appointment').add({
+          ...appointmentData,
+          'status': 'canceled',
+          'canceled_at': DateTime.now().toIso8601String(),
+        });
+        print("Step 3: Added appointment to cancled_appointment"); // Debug print
+      }
+
+      // Step 4: Delete the current appointment
       await FirebaseFirestore.instance
           .collection('appointment_pending')
           .doc(appointmentId)
           .delete();
-      print("Step 3: Deleted current appointment"); // Debug print
+      print("Step 4: Deleted current appointment"); // Debug print
 
-      // Step 4: Process queue if not empty
+      // Step 5: Process queue if not empty
       if (queueSnapshot.docs.isNotEmpty) {
         // Get the first person's queue entry
         var queueDoc = queueSnapshot.docs.first;
         var queueData = queueDoc.data() as Map<String, dynamic>;
         String nextUserId = queueData['userId'];
         print(
-            "Step 4: Found user in queue with ID: $nextUserId"); // Debug print
+            "Step 5: Found user in queue with ID: $nextUserId"); // Debug print
 
         // Get user information for the new appointment
         DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
@@ -244,7 +271,7 @@ class AllPendingAppointmentsPage extends StatelessWidget {
             .get();
 
         print(
-            "Step 5: Retrieved user data. Exists: ${userSnapshot.exists}"); // Debug print
+            "Step 6: Retrieved user data. Exists: ${userSnapshot.exists}"); // Debug print
 
         Map<String, dynamic> userData = {};
         if (userSnapshot.exists) {
@@ -265,7 +292,7 @@ class AllPendingAppointmentsPage extends StatelessWidget {
           'created_at': DateTime.now().toIso8601String(),
         };
 
-        print("Step 6: Created new appointment data"); // Debug print
+        print("Step 7: Created new appointment data"); // Debug print
 
         // Add the new appointment
         DocumentReference newAppointmentRef = await FirebaseFirestore.instance
@@ -273,11 +300,11 @@ class AllPendingAppointmentsPage extends StatelessWidget {
             .add(newAppointmentData);
 
         print(
-            "Step 7: Added new appointment with ID: ${newAppointmentRef.id}"); // Debug print
+            "Step 8: Added new appointment with ID: ${newAppointmentRef.id}"); // Debug print
 
         // Mark the slot as booked again
         await _markSlotAsBooked(doctorId, date, timeSlot);
-        print("Step 8: Marked slot as booked again"); // Debug print
+        print("Step 9: Marked slot as booked again"); // Debug print
 
         // Remove the user from the queue
         await FirebaseFirestore.instance
@@ -285,7 +312,7 @@ class AllPendingAppointmentsPage extends StatelessWidget {
             .doc(queueDoc.id)
             .delete();
 
-        print("Step 9: Removed user from queue"); // Debug print
+        print("Step 10: Removed user from queue"); // Debug print
 
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
@@ -315,6 +342,7 @@ class AllPendingAppointmentsPage extends StatelessWidget {
       );
     }
   }
+
 
   Future<void> _makeSlotAvailable(
     String doctorId,

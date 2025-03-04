@@ -22,7 +22,6 @@ class _ClinicHomeScreenState extends State<ClinicHomeScreen> {
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
       ),
-      drawer: MyDrawer(),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(

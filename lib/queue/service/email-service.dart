@@ -26,7 +26,7 @@ class EmailService {
         ..html = '''
           <h3>Appointment Confirmation</h3>
           <p>Dear $userName ,</p>
-          <p>Your appointment has been successfully booked with:</p>
+          <p>Your appoitment from Queue has been successfully accepted:</p>
           <p><strong>Doctor:</strong> $doctorName</p>
           <p><strong>Date:</strong> $formattedDate</p>
           <p><strong>Time:</strong> $timeSlot</p>

@@ -70,6 +70,7 @@ class AllAcceptedAppointmentsPage extends StatelessWidget {
                           userName: appointmentData['user_name'],
                           doctorId: appointmentData['doctor_id'],
                           userPhone: appointmentData['user_phone'],
+
                           date: appointmentData['date'],
                           timeSlot: appointmentData['time_slot'],
                         ),
@@ -96,15 +97,20 @@ class AllAcceptedAppointmentsPage extends StatelessWidget {
                               'User Name', appointmentData['user_name']),
                           _buildInfoRow(
                               'User Phone', appointmentData['user_phone']),
+
+                          _buildInfoRow('User Email', appointmentData['user_email']),
                           _buildInfoRow(
                               'Date',
                               DateFormat('yyyy-MM-dd').format(
                                   DateTime.parse(appointmentData['date']))),
                           _buildInfoRow(
                               'Time Slot', appointmentData['time_slot']),
-                          _buildInfoRow('Status', appointmentData['status']),
                           _buildInfoRow(
-                              'doctorId', appointmentData['doctor_id']),
+                            'Accepted at',
+                            DateFormat('yyyy-MM-dd HH:mm').format(DateTime.parse(appointmentData['created_at'])),
+                          )
+
+
                         ],
                       ),
                     ),

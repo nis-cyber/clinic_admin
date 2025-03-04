@@ -14,7 +14,7 @@ class BottomNavBar extends StatelessWidget {
     return BottomNavigationBar(
       backgroundColor: Color.fromARGB(255, 174, 149, 214),
       currentIndex: selectedIndex,
-      elevation: 3,
+      elevation: 4,
       onTap: onTap,
       type: BottomNavigationBarType.fixed,
       items: const [
@@ -29,6 +29,10 @@ class BottomNavBar extends StatelessWidget {
         BottomNavigationBarItem(
           icon: Icon(CupertinoIcons.book),
           label: "Appointments",
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(CupertinoIcons.bell),
+          label: "Notifications",
         ),
       ],
     );

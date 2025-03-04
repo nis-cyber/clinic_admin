@@ -2,6 +2,7 @@ import 'package:clinic_admin/medical_record/create_medical_record_page.dart';
 import 'package:clinic_admin/medical_record/detail_medical_record_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class MedicalReportsPage extends StatelessWidget {
   final String appointmentId;
@@ -116,15 +117,26 @@ class MedicalReportsPage extends StatelessWidget {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            subtitle: Text(
-                              // DateFormat('yyyy-MM-dd – kk:mm').format(
-                              //   (reportData['timestamp'] as Timestamp).toDate(),
-                              // ),
-                              reportData['date'] ?? 'Unknown Doctor',
-                              style: const TextStyle(
-                                color: Color(
-                                    0xFF6B7280), // Muted Gray for timestamp
-                              ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  reportData['date'] ?? 'Unknown Date',
+                                  style: const TextStyle(
+                                    color: Color(0xFF6B7280),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  reportData['timestamp'] != null
+                                      ? "Created: ${DateFormat('HH:mm').format((reportData['timestamp'] as Timestamp).toDate())}"
+                                      : 'Time unknown',
+                                  style: const TextStyle(
+                                    color: Color(0xFF6B7280),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                             ),
                             trailing: const Icon(
                               Icons.arrow_forward_ios,

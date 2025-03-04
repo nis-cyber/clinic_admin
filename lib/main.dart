@@ -1,4 +1,5 @@
 import 'package:clinic_admin/appointments/appointment_page.dart';
+import 'package:clinic_admin/appointments/canceled_appointment_page.dart';
 import 'package:clinic_admin/auth/pages/status_page.dart';
 import 'package:clinic_admin/api/firebase_options.dart';
 import 'package:clinic_admin/dashboard/home_page.dart';
@@ -50,6 +51,7 @@ class _MainPageState extends State<MainPage> {
     ClinicHomeScreen(),
     DoctorPage(),
     AppointmentPage(),
+    AppointmentNotificationsPage()
   ];
 
   int _selectedIndex = 0;

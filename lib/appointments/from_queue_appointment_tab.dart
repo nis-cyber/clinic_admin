@@ -102,7 +102,9 @@ class FromQueueAppointmentTab extends StatelessWidget {
                               'Time Slot', appointmentData['timeSlot']),
                           _buildInfoRow('Status', appointmentData['status']),
                           _buildInfoRow(
-                              'doctorId', appointmentData['doctorId']),
+                            'Accepted At',
+                            DateFormat('yyyy-MM-dd HH:mm').format(appointmentData['timestamp'].toDate()),
+                          )
                         ],
                       ),
                     ),
